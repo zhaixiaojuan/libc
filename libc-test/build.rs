@@ -2804,6 +2804,7 @@ fn test_linux(target: &str) {
     let gnuabihf = target.contains("gnueabihf");
     let x86_64_gnux32 = target.contains("gnux32") && x86_64;
     let riscv64 = target.contains("riscv64");
+    let loongarch64 = target.contains("loongarch64");
     let uclibc = target.contains("uclibc");
 
     let mut cfg = ctest_cfg();
@@ -3112,6 +3113,10 @@ fn test_linux(target: &str) {
             // FIXME: CI's kernel header version is old.
             "sockaddr_can" => true,
 
+            // FIXME: loongarch64 glibc:2.35, kernel:5.17
+            // sockaddr_vm definition changed
+            "sockaddr_vm" if loongarch64 => true,
+
             // Requires glibc 2.33 or newer.
             "mallinfo2" => true,
 
@@ -3235,6 +3240,20 @@ fn test_linux(target: &str) {
             // FIXME: Not currently available in headers on MIPS
             // Not yet implemented on sparc64
             "SYS_clone3" if mips | sparc64 => true,
+
+            // FIXME: loongarch64 glibc:2.35, kernel:5.17
+            // SYS_getrlimit/SYS_setrlimit is replaced by SYS_prlimit64
+            // MINSIGSTKSZ/SIGSETSZ is unset in sigstksz.h
+            // PTHREAD_STACK_MIN is sometimes not constant
+            // NFNL_SUBSYS_COUNT = 13, NF_NETDEV_NUMHOOKS = 2
+            | "SYS_getrlimit"
+            | "SYS_setrlimit"
+            | "PTHREAD_STACK_MIN"
+            | "MINSIGSTKSZ"
+            | "SIGSTKSZ"
+            | "NFNL_SUBSYS_COUNT"
+            | "NF_NETDEV_NUMHOOKS"
+               if loongarch64 => true,
 
             // FIXME: these syscalls were added in Linux 5.9 or later
             // and are currently not included in the glibc headers.
